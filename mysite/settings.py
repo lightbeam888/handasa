@@ -191,7 +191,7 @@ WAGTAILSEARCH_BACKENDS = {
 
 # Base URL to use when referring to full URLs within the Wagtail admin backend -
 # e.g. in notification emails. Don't include '/admin' or a trailing slash
-WAGTAILADMIN_BASE_URL = "http://localhost"
+WAGTAILADMIN_BASE_URL = env.str("WAGTAILADMIN_BASE_URL", default=None)
 
 # Tags
 
@@ -215,13 +215,6 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"])
 
 # Default email address used to send messages from the website.
 
-# A list of people who get error notifications.
-ADMINS = []
-
-# A list in the same format as ADMINS that specifies who should get broken link
-# (404) notifications when BrokenLinkEmailsMiddleware is enabled.
-MANAGERS = ADMINS
-
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
@@ -230,3 +223,13 @@ CACHES = {
         "TIMEOUT": 14400,  # in seconds
     }
 }
+
+# EMAIL SETTINGS
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = env.str("EMAIL_HOST")
+EMAIL_PORT = env.int("EMAIL_PORT")
+EMAIL_HOST_USER = env.str("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = env.str("EMAIL_HOST_PASSWORD")
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
+DEFAULT_FROM_EMAIL = env.str("DEFAULT_FROM_EMAIL")
+

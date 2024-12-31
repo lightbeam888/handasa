@@ -4,6 +4,7 @@ Create or customize your page models here.
 
 from coderedcms.blocks import NAVIGATION_STREAMBLOCKS, BaseBlock
 from coderedcms.fields import CoderedStreamField
+from django import forms
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -231,24 +232,24 @@ class CustomSetting(ClusterableModel, BaseSiteSetting):
     captcha = models.CharField(
         blank=True,
         max_length=255,
-        verbose_name="captcha key",
+        verbose_name="Captcha key",
         help_text='Your captcha site key'
         ,
     )
     language_menu = models.BooleanField(
         default=True,
-        verbose_name="language menu item",
+        verbose_name="Language menu item",
         help_text="Show/hide language menu item"
     )
     content_margin_top = models.IntegerField(
         default=0,
-        verbose_name="content margin top (px)",
-        help_text="margin top for content, use with fixed navbar settings"
+        verbose_name="Content margin top (px)",
+        help_text="Margin top for content, use with fixed navbar settings"
     )
     footer_bg_color = models.CharField(
         null=True, blank=True, max_length=500,
-        verbose_name="footer background color",
-        help_text="footer background color value"
+        verbose_name="Footer background color",
+        help_text="Footer background color value"
     )
     footer_text_color = models.CharField(
         null=True, blank=True, max_length=500,
@@ -264,65 +265,32 @@ class CustomSetting(ClusterableModel, BaseSiteSetting):
     facebook_page_id = models.CharField(
         blank=True,
         max_length=255,
-        verbose_name="facebook page id",
-        help_text='Your facebook page id',
+        verbose_name="Facebook page ID",
+        help_text='Your Facebook page ID',
     )
 
     using_messenger = models.BooleanField(
         default=True,
-        verbose_name="using facebook messenger chat support",
-        help_text="Show/hide facebook messenger chat support"
+        verbose_name="Using Facebook Messenger chat support",
+        help_text="Show/hide Facebook Messenger chat support"
     )
 
     whatsapp_id = models.CharField(
         blank=True,
         max_length=255,
-        verbose_name="whatsapp id",
-        help_text='Your whatsapp id',
+        verbose_name="Whatsapp ID",
+        help_text='Your Whatsapp ID',
     )
 
     using_whatsapp = models.BooleanField(
         default=True,
-        verbose_name="using whatsapp chat support",
+        verbose_name="Using whatsapp chat support",
         help_text="Show/hide whatsapp chat support"
-    )
-    email_host = models.CharField(
-        blank=True,
-        max_length=255,
-        verbose_name="EMAIL_HOST",
-        help_text='Your Email Host',
-    )
-    email_port = models.PositiveIntegerField(
-        default=0,
-        verbose_name="EMAIL_PORT",
-        help_text='Your Email Port',
-    )
-    email_use_tls = models.BooleanField(
-        default=True,
-        verbose_name="EMAIL_USE_TLS",
-        help_text='Your Email Use TLS',
-    )
-    email_host_user = models.CharField(
-        blank=True,
-        max_length=255,
-        verbose_name="EMAIL_HOST_USER",
-        help_text="Your Email Host User"
-    )
-    email_host_password = models.CharField(
-        blank=True,
-        max_length=255,
-        verbose_name="EMAIL_HOST_PASSWORD",
-        help_text='Your Email Host Password',
-    )
-    email_sender = models.EmailField(
-        null=True,
-        verbose_name="Email Sender",
-        help_text="Your email sender"
     )
     owner_mail = models.EmailField(
         null=True,
-        verbose_name="Owner Mail",
-        help_text="Owner Mail"
+        verbose_name="Owner mail",
+        help_text="Enter the email address of the account owner or administrator."
     )
 
     custom_css = models.TextField(
@@ -332,23 +300,27 @@ class CustomSetting(ClusterableModel, BaseSiteSetting):
     )
     panels = [
         FieldPanel("captcha"),
-        FieldPanel("language_menu"),
-        FieldPanel("content_margin_top"),
-        FieldPanel("nav_bg_color"),
-        FieldPanel("footer_bg_color"),
-        FieldPanel("footer_text_color"),
-        FieldPanel("facebook_page_id"),
-        FieldPanel("using_messenger"),
-        FieldPanel("whatsapp_id"),
-        FieldPanel("using_whatsapp"),
-        FieldPanel("email_host"),
-        FieldPanel("email_port"),
-        FieldPanel("email_use_tls"),
-        FieldPanel("email_host_user"),
-        FieldPanel("email_host_password"),
-        FieldPanel("email_sender"),
-        FieldPanel("owner_mail"),
+        MultiFieldPanel(
+            children=[
 
+            FieldPanel("language_menu"),
+            FieldPanel("content_margin_top"),
+            FieldPanel("nav_bg_color"),
+            FieldPanel("footer_bg_color"),
+            FieldPanel("footer_text_color"),
+            ],
+            heading="UI Settings",
+        ),
+        MultiFieldPanel(
+            children=[
+                FieldPanel("facebook_page_id"),
+                FieldPanel("using_messenger"),
+                FieldPanel("whatsapp_id"),
+                FieldPanel("using_whatsapp"),
+            ],
+            heading="Social Media Settings",
+        ),
+        FieldPanel("owner_mail"),
         InlinePanel(
             "site_navbartrans",
             help_text="Choose one or more navbars for your site.",
