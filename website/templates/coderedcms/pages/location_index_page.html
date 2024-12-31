@@ -1,0 +1,53 @@
+{% extends "coderedcms/pages/web_page.html" %}
+{% load wagtailcore_tags wagtailimages_tags coderedcms_tags %}
+{% block index_filters %}{% endblock %}
+{% block index_content %}
+{% if page.index_show_subpages %}
+<div class="container">
+  <div class="row">
+      {% for article in index_paginated %}
+      <div class="col-md-4 mb-4 shadow">
+        {% if self.show_images %}
+        <div class="card-body border p-4">
+          <a href="{% pageurl article %}" title="{{article.title}}" class="text-white-50">
+            {% if article.thumbnail %}
+            {% image article.specific.thumbnail fill-1600x900 format-webp as cover_image %}
+            <img src="{{cover_image.url}}" class="w-100" alt="{{article.title}}">
+            {% endif %}
+          </a>
+<!--        </div>-->
+        {% endif %}
+<!--        <div class="card-body">-->
+        <h3 class="card-title text-center mt-1">
+          <a href="{% pageurl article %}">{{article.title}}</a>
+        </h3>
+          {% if self.show_meta %}
+            <p class="card-text">by {{article.specific.seo_author}} &bull; {{article.specific.seo_published_at}}  </p>
+          {% endif %}
+          {% if self.show_captions and article.specific.caption %}
+            <p class="lead card-text">{{article.specific.caption}}</p>
+          {% endif %}
+<!--        <a href = "{% pageurl article %}" class="btn btn-info" style="padding:15px 50px; font-size:18px; font-weight:bold">KEEP READING</a>-->
+<!--        {% if self.show_preview_text %}<p>{{article.specific.body_preview}}</p>{% endif %}-->
+          {% if article.specific.address %}
+            <p class="card-text" style="word-wrap: break-word;"><span style="font-weight:900">Address:</span> <br/>{{ article.specific.address }}</p>
+          {% endif %}
+          {% if article.specific.tel %}
+          <p class="card-text"><span style="font-weight:900">TEL:</span> {{ article.specific.tel }}</p>
+          {% endif %}
+        </div>
+      </div>
+        {% if forloop.counter|divisibleby:3 and not forloop.last %}
+          </div>
+          <div class="row">
+        {% endif %}
+      {% endfor %}
+    </div>
+    {% if page.index_classifiers.exists %}
+
+    {% endif %}
+  </div>
+  {% include "coderedcms/includes/pagination.html" with items=index_paginated %}
+</div>
+{% endif %}
+{% endblock %}

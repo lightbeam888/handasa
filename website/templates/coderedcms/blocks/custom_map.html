@@ -1,0 +1,283 @@
+{% load custom_tags %}
+{% get_location_marker as locations_json %}
+{% block extrahead %}
+    <script>
+        // Get value from block
+        var flongitude = {{ self.longitude }};
+        var flatitude = {{ self.latitude }};
+        var fzoom = {{ self.zoom_default_level }};
+        var zoom_maker = {{ self.zoom_maker_level }};
+    </script>
+{% endblock %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<div>
+ <style>
+    #map {
+      height: 800px;
+      width: 80%;
+      float: right;
+    }
+    #location-list-container {
+      width: 20%;
+      float: left;
+      border: 1px solid #ddd;
+      height: 800px;
+      overflow-y: auto;
+    }
+
+    #location-list-header {
+        font-size: 18px;
+        font-weight: bold;
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+        background-color:#F2F2F2;
+    }
+
+
+    #location-list {
+      list-style: none;
+      padding: 10px;
+    }
+
+    .location-item {
+      cursor: pointer;
+      margin-bottom: 10px;
+      padding: 5px;
+    }
+
+    .location-item:hover {
+      color:red;
+      text-decoration: underline;
+    }
+    .selected {
+        color: red;
+        font-weight: bold;
+    }
+    .custom-popup {
+        max-width: 300px;
+    }
+
+    .custom-popup p {
+        margin: 2px 0;
+    }
+    #go-to-map-button {
+    background-color: #DF301E;
+    color: white;
+    padding: 5px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%;
+    }
+    #go-to-map-button:hover {
+        background-color: #a72c1f;
+    }
+    #location-dropdown {
+        display: none;
+    }
+    #dropdown-menu {
+            display: none;
+    }
+    .show {
+        display: block !important;
+    }
+    @media (max-width: 768px) {
+        #location-dropdown {
+            display: block;
+            width: 100%;
+            border: 2px solid black;
+            border-bottom: none;
+        }
+        #dropdownMenuButton {
+            width: 100%;
+            background: #6c71c6;
+        color: white;
+        }
+        #dropdown-menu {
+            width: 100%;
+            border-bottom: 1px solid;
+            border-top: 1px solid;
+            margin: 0;
+        }
+        /* Hide the location list by default */
+        #location-list-container {
+            float: none;
+            height: auto;
+            width: 100%;
+            display: none;
+        }
+        #location-list {
+            display: none;
+        }
+
+        /* Show the location list when the header is clicked */
+        #location-list-header {
+            cursor: pointer;
+        }
+
+        /* Style the dropdown appearance */
+        #location-list-header::after {
+            content: "\25BE"; /* Downward arrow */
+            float: right;
+        }
+
+        /* Display the location list when the header is clicked */
+        #location-list-header.clicked + #location-list {
+            display: block;
+        }
+        #map {
+            width: 100%;
+        }
+    }
+ </style>
+ <div class="dropdown" id="location-dropdown">
+    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" onclick="handleDropdown()">
+        {{ self.location_header }}
+    </button>
+    <ul class="dropdown-menu2" aria-labelledby="dropdownMenuButton" id="dropdown-menu">
+        
+    </ul>
+  </div>
+  <div>
+    <div id="location-list-container">
+        <div id="location-list-header">{{ self.location_header }}</div>
+        <ul id="location-list"></ul>
+    </div>
+    <div id="map"></div>
+  </div>
+<script type="text/javascript">
+    var locations = {{locations_json|safe}};
+
+    var map = L.map('map').setView([flatitude, flongitude],fzoom);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    var locationList = document.getElementById('location-list');
+    var locationDropdown = document.getElementById('dropdown-menu');
+    var defaultIcon = L.icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+    });
+
+    var selectedIcon = L.icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+    });
+
+    var selectedMarker = null;
+
+
+    locations.forEach(function (location) {
+        var marker = L.marker([location.latitude, location.longitude], { icon: defaultIcon }).addTo(map);
+
+        // Customize popup content with a button
+        var popupContent = `
+            <div class="custom-popup">
+                <p><b>Location:</b> ${location.location}</p>
+                <p><b>Address:</b></p>
+                <p>${location.description}</p>
+                <p><b>TEL:</b> ${location.tel}</p>
+                <button id="go-to-map-button" onclick="handleButtonClick('${location.link}')">Go to map</button>
+            </div>
+        `;
+
+        marker.bindPopup(popupContent);
+        marker.on('click', function (e) {
+            if (selectedMarker) {
+                selectedMarker.setIcon(defaultIcon); // Reset the icon to the previous marker
+            }
+            map.setView(e.target.getLatLng(), zoom_maker); // Zoom into the marker when clicked
+            selectedMarker = e.target;
+            selectedMarker.setIcon(selectedIcon); // Sets the icon for the selected marker
+        });
+
+        var listItem = document.createElement('li');
+        listItem.className = 'location-item';
+        listItem.textContent = location.location;
+        listItem.addEventListener('click', function () {
+
+            // Remove class 'selected' from all list items
+            var items = document.getElementsByClassName('location-item');
+            for (var i = 0; i < items.length; i++) {
+                items[i].classList.remove('selected');
+            }
+
+            // Add class 'selected' to selected item
+            listItem.classList.add('selected');
+
+            if (selectedMarker) {
+                selectedMarker.setIcon(defaultIcon); // Reset the icon to the previous marker
+                selectedMarker.closePopup();
+            }
+            map.setView([location.latitude, location.longitude], zoom_maker);
+            selectedMarker = marker;
+            selectedMarker.setIcon(selectedIcon); // Sets the icon for the selected marker
+            selectedMarker.openPopup();
+            // var dropdown = document.getElementById("dropdown-menu");
+            // dropdown.classList.remove("show");
+        });
+        locationList.appendChild(listItem);
+        var listItem2 = document.createElement('li');
+        listItem2.className = 'location-item';
+        listItem2.textContent = location.location;
+        listItem2.addEventListener('click', function () {
+
+            // Remove class 'selected' from all list items
+            var items = document.getElementsByClassName('location-item');
+            for (var i = 0; i < items.length; i++) {
+                items[i].classList.remove('selected');
+            }
+
+            // Add class 'selected' to selected item
+            listItem.classList.add('selected');
+
+            if (selectedMarker) {
+                selectedMarker.setIcon(defaultIcon); // Reset the icon to the previous marker
+                selectedMarker.closePopup();
+            }
+            map.setView([location.latitude, location.longitude], zoom_maker);
+            selectedMarker = marker;
+            selectedMarker.setIcon(selectedIcon); // Sets the icon for the selected marker
+            selectedMarker.openPopup();
+            var dropdown = document.getElementById("dropdown-menu");
+            dropdown.classList.remove("show");
+        });
+        locationDropdown.appendChild(listItem2);
+    });
+
+    // Function to handle button click
+    function handleButtonClick(link) {
+        window.open(link, '_blank');
+    }
+</script>
+<script>
+    function handleDropdown() {
+        document.getElementById("dropdown-menu").classList.toggle("show");
+        }
+
+        // Close the dropdown menu if the user clicks outside of it
+        window.onclick = function(event) {
+        if (!event.target.matches('.dropbtn')) {
+            var dropdowns = document.getElementsByClassName("dropdown-menu");
+            var i;
+            for (i = 0; i < dropdowns.length; i++) {
+            var openDropdown = dropdowns[i];
+                if (openDropdown.classList.contains('show')) {
+                    openDropdown.classList.remove('show');
+                }
+            }
+        }
+    }
+</script>
+</div>

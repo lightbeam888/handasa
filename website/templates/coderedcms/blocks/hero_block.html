@@ -1,0 +1,50 @@
+{% load wagtailcore_tags wagtailimages_tags %}
+{% if not self.fluid %}
+<div class="container">
+{% endif %}
+{% if self.show_form %}
+<div class="action-form-container">
+  <div class="container my-5 action-form">
+  {% include 'coderedcms/blocks/form_block.html' with form_url=self.form_url %}
+  </div>
+</div>
+<style>
+  .action-form {
+    position: absolute;
+    z-index: 100;
+    background: {{self.form_background_color}};
+    width: {{self.form_width}}%;
+    left: {{self.form_left}}%;
+    top: {{self.form_top}}px;
+    padding: 20px;
+    border-radius: 20px;
+  }
+  .action-form-container {
+    position: relative;
+  }
+  @media only screen and (max-width: 540px) {
+    .action-form {
+      position: relative;
+      background: {{self.form_background_color}};
+      width: 100%;
+      left: 0%;
+      padding: 20px;
+      border-radius: 20px;
+      {% if not self.form_mobile_show %} display: none {% endif %} ;
+    }
+  }
+</style>
+{% endif %}
+{% image self.background_image max-1600x1600 format-webp as background_image %}
+<div class="hero-bg {% if self.is_parallax %}parallax{% endif %} {% if self.tile_image %}tile{% endif %} {{self.settings.custom_css_class}}"
+  style="{% if self.background_color %}background:{{self.background_color}};{% endif %}{% if background_image %}background-image:{{self.background_image_gradient}}, url({{background_image.url}});{% endif %}"
+  {% if self.settings.custom_id %}id="{{self.settings.custom_id}}"{% endif %}>
+  <div class="hero-fg" style="{% if self.foreground_color %}color:{{self.foreground_color}};{% endif %}">
+    {% for block in self.content %}
+    {% include_block block %}
+    {% endfor %}
+  </div>
+</div>
+{% if not self.fluid %}
+</div>
+{% endif %}

@@ -1,0 +1,55 @@
+Setup a new wagtail server
+    2  python3 --version
+    5  cd /usr/src/
+    apt update
+    7  apt install git
+    8  git clone https://github.com/Salkirwi/Wagtail-CRX.git
+    9  git checkout develop
+
+   12  cd Wagtail-CRX/
+   13  git checkout develop
+   15  chmod 777 media
+   16  chmod 777 static
+   18  nano
+   19  apt install nginx -y
+   20  apt install supervisor python3-pip -y
+   21  update-rc.d nginx enable
+   24  sudo cp supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+   28  alias python=python3.10
+   29  sudo -H pip3 install virtualenv
+   30  virtualenv --python=/usr/bin/python3.10 virtualenv
+   31  . virtualenv/bin/activate
+   32  python --version
+   33  pip3 install -r requirements.txt
+   34  deactivate
+   35  sudo service supervisor start
+   36  nano /etc/nginx/conf.d/api.conf
+   37  sudo service nginx stop
+   38  sudo service nginx start
+   47  nano /etc/nginx/sites-enabled/default
+   48  sudo service nginx start
+   49  python manage.py migrate
+   58  python /usr/src/Wagtail-CRX/manage.py collectstatic --noinput
+   59 nano /etc/supervisor/conf.d/supervisord.conf
+
+
+  212  apt install vsftpd
+  213  systemctl start vsftpd
+  214  systemctl enable vsftpd
+  215  useradd -m fptuser
+  216  sudo passwd fptuser
+  217  sudo ufw allow 20/tcp
+  218  sudo ufw allow 21/tcp
+  219  cd /srv/ftp
+  220  sudo passwd fptuser
+  221  sudo usermod -d /usr/src/
+  222  sudo usermod -d /usr/src/ fpt
+  223  sudo usermod -d /usr/src/ fptuser
+  224  sudo usermod -d /usr/src/ fpt
+  225  sudo usermod -d /usr/src/ fptuser
+  226  sudo systemctl restart vsftpd.service
+  227  sudo nano /etc/vsftpd.conf
+  228  sudo systemctl restart vsftpd.service
+  229  nano /etc/vsftpd.chroot_list
+  230  sudo nano /etc/vsftpd.conf
+  231  sudo systemctl restart vsftpd.service

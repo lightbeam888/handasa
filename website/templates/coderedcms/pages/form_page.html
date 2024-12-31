@@ -1,0 +1,56 @@
+{% extends "coderedcms/pages/web_page.html" %}
+{% load wagtailcore_tags coderedcms_tags django_bootstrap5 %}
+
+{% block content_body %}
+{{ block.super }}
+{% if page.form_live %}
+<div class="container my-5">
+  <script type="text/javascript">
+      let captcha_key = "{{settings.website.CustomSetting.captcha}}"
+      let captcha = false;
+      var onloadCallback = function() {
+        grecaptcha.render('html_element', {
+          'sitekey' : captcha_key
+        });
+      };
+      var onRecaptchaSuccess = function() {
+        captcha = true;
+      };
+      var validateForm = function() {
+        if(!captcha){
+          document.getElementById("html_element").scrollIntoView();
+          return true
+        }
+        return captcha
+      }
+    </script>
+  <form onsubmit="return validateForm()" class="{{ page.form_css_class }}" id="submit_form" action="{% pageurl self %}" method="POST" {% if form|is_file_form %}enctype="multipart/form-data"{% endif %}>
+    {% csrf_token %}
+    {% bootstrap_form form layout="horizontal" %}
+
+    {% block captcha %}
+    {% if page.spam_protection %}
+    {% include "coderedcms/includes/form_honeypot.html" %}
+    {% endif %}
+    {% endblock %}
+
+    <div class="row">
+      <div class="{{'horizontal_label_class'|bootstrap_settings}}"></div>
+      <div class="{{'horizontal_field_class'|bootstrap_settings}}">
+
+        <div
+          id="html_element"
+          data-sitekey="{{settings.website.CustomSetting.captcha}}"
+          data-callback="onRecaptchaSuccess"
+        ></div>
+        <button type="submit" class="btn {{page.button_size}} {{page.button_style}} {{page.button_css_class}}" id="submit_button">
+          {{ page.button_text }}
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+<script src="https://www.google.com/recaptcha/api.js?onload=onloadCallback&render=explicit" async defer>
+    </script>
+{% endif %}
+{% endblock %}

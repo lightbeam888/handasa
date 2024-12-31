@@ -1,0 +1,64 @@
+{% extends "coderedcms/pages/web_page.html" %}
+{% load static wagtailcore_tags wagtailimages_tags coderedcms_tags custom_tags %}
+
+{% block extra_head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/baguettebox.js/1.12.0/baguetteBox.min.js" integrity="sha512-HzIuiABxntLbBS8ClRa7drXZI3cqvkAZ5DD0JCAkmRwUtykSGqzA9uItHivDhRUYnW3MMyY5xqk7qVUHOEMbMA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/baguettebox.js/1.12.0/baguetteBox.min.css" integrity="sha512-1hit2XBKwGtoT792KMYEhLYTk+eYYATgFqSkftn4dG8/7TA0ysVRCBIYzhe+IRd9XPi2l8pceoKlV+Oa/B+PDA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+<style>
+  .image-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #4f828c;
+    text-align: center;
+    word-wrap: break-word;
+  }
+
+</style>
+{% endblock %}
+
+{% block content_body %}
+<div class="container gallery-wrapper">
+  <div class="row gallery-container justify-content-start">
+    {% for img in gallery_images %}
+      {% image img height-300 as img_thumb %}
+      <div class="col-sm-6 col-md-3 col-lg-2 my-3 text-center">
+        <a href="{{ img|original_url }}" title="{{ img_thumb.alt|hide_num_order }}">
+          <img src="{{ img_thumb.url }}" alt="{{ img_thumb.alt }}" class="gallery-thumbnail img-thumbnail">
+          <div class="image-title mt-2">{{ img_thumb.alt|hide_num_order }}</div>
+        </a>
+        <link rel="preload" href="{{ img|original_url }}">
+      </div>
+    {% endfor %}
+  </div>
+
+  {% if page.use_lightbox or use_lightbox %}
+  <script type="text/javascript">
+    window.addEventListener('load', function() {
+      baguetteBox.run('.gallery-container');
+    });
+  </script>
+  {% endif %}
+  <nav>
+    <ul class="pagination mt-3 justify-content-center">
+      {% if gallery_images.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ gallery_images.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&amp;{{ key }}={{ value }}{% endif %}{% endfor %}" tabindex="-1">Previous</a>
+      </li>
+      {% endif %}
+      {% for page in gallery_images.paginator.page_range %}
+      <li class="page-item"><a class="page-link {% if gallery_images.number == page  %}active{% endif %}" href="?page={{page }}">{{page}}</a></li>
+      {% endfor %}
+
+      {% if gallery_images.has_next %}
+
+      <li class="page-item">
+        <a class="page-link" href="?page={{ gallery_images.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&amp;{{ key }}={{ value }}{% endif %}{% endfor %}">Next</a>
+      </li>
+      {% endif %}
+    </ul>
+  </nav>
+
+
+</div>
+{% endblock %}
