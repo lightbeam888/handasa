@@ -1,26 +1,5 @@
 {% load wagtailcore_tags coderedcms_tags django_bootstrap5 custom_tags %}
 {% get_contact_form as contact %}
-  <script type="text/javascript">
-      let captcha_key = "{{settings.website.CustomSetting.captcha}}"
-      let captcha = false;
-      var onloadCallback = function() {
-        grecaptcha.render('html_element', {
-          'sitekey' : captcha_key
-        });
-      };
-      var onRecaptchaSuccess = function() {
-        captcha = true;
-      };
-      var validateForm = function() {
-        return true
-        if(!captcha){
-          document.getElementById("html_element").scrollIntoView();
-          return false
-        }
-        return captcha
-      }
-
-    </script>
   <form class="{{ contact.form_css_class }}" id="submit_form" action="{{form_url}}" method="POST" >
     {% csrf_token %}
 
@@ -35,18 +14,10 @@
     <div class="row">
       <div class="{{'horizontal_label_class'|bootstrap_settings}}"></div>
       <div class="{{'horizontal_field_class'|bootstrap_settings}}">
-
-        <div
-          id="html_element"
-          data-sitekey="{{settings.website.CustomSetting.captcha}}"
-          data-callback="onRecaptchaSuccess"
-        ></div>
         <button type="submit" class="btn btn-primary" id="submit_button">
           Submit
         </button>
       </div>
     </div>
   </form>
-<script src="https://www.google.com/recaptcha/api.js?onload=onloadCallback&render=explicit" async defer>
-    </script>
 

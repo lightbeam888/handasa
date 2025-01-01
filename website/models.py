@@ -8,9 +8,10 @@ from django import forms
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django_recaptcha.fields import ReCaptchaField
 
 from modelcluster.fields import ParentalKey
-from coderedcms.forms import CoderedFormField
+from coderedcms.forms import CoderedFormField, CoderedFormBuilder
 from coderedcms.models import (
     CoderedArticlePage,
     CoderedArticleIndexPage,
@@ -129,14 +130,38 @@ class LocationIndexPage(CoderedArticleIndexPage):
         use_json_field=True,
     )
 
+class CaptchaFormBuilder(CoderedFormBuilder):
+    CAPTCHA_FIELD_NAME = "captcha"
+
+    @property
+    def formfields(self):
+        # Add captcha to formfields property
+        fields = super().formfields
+        custom_setting : CustomSetting= CustomSetting.objects.first()
+        if custom_setting and custom_setting.captcha_secret_key and custom_setting.captcha_site_key:
+            fields[self.CAPTCHA_FIELD_NAME] = ReCaptchaField(
+                label=" ", # Use space to hide label and make sure bootstrap horizontal form layout works
+                public_key=custom_setting.captcha_site_key,
+                private_key=custom_setting.captcha_secret_key)
+
+        return fields
+
 
 class FormPage(CoderedFormPage):
     """
     A page with an html <form>.
     """
 
+    form_builder = CaptchaFormBuilder
+
     class Meta:
         verbose_name = "Form"
+
+    def process_form_submission(self, request, form, form_submission, processed_data):
+        if form.is_valid():
+            form.fields.pop(CaptchaFormBuilder.CAPTCHA_FIELD_NAME, None)
+            form.cleaned_data.pop(CaptchaFormBuilder.CAPTCHA_FIELD_NAME, None)
+        return super().process_form_submission(request, form, form_submission, processed_data)
 
     template = "coderedcms/pages/form_page.html"
 
@@ -229,12 +254,17 @@ class CustomSetting(ClusterableModel, BaseSiteSetting):
     class Meta:
         verbose_name = "Custom Settings"
 
-    captcha = models.CharField(
+    captcha_site_key = models.CharField(
         blank=True,
         max_length=255,
-        verbose_name="Captcha key",
-        help_text='Your captcha site key'
-        ,
+        verbose_name="reCAPTCHA site key",
+        help_text='Your reCAPTCHA v2 site key',
+    )
+    captcha_secret_key = models.CharField(
+        blank=True,
+        max_length=255,
+        verbose_name="reCAPTCHA secret key",
+        help_text='Your reCAPTCHA v2 secret key',
     )
     language_menu = models.BooleanField(
         default=True,
@@ -287,11 +317,6 @@ class CustomSetting(ClusterableModel, BaseSiteSetting):
         verbose_name="Using whatsapp chat support",
         help_text="Show/hide whatsapp chat support"
     )
-    owner_mail = models.EmailField(
-        null=True,
-        verbose_name="Owner mail",
-        help_text="Enter the email address of the account owner or administrator."
-    )
 
     custom_css = models.TextField(
         null=True,
@@ -299,7 +324,13 @@ class CustomSetting(ClusterableModel, BaseSiteSetting):
         help_text="Custom CSS"
     )
     panels = [
-        FieldPanel("captcha"),
+        MultiFieldPanel(
+            children=[
+                FieldPanel("captcha_site_key"),
+                FieldPanel("captcha_secret_key"),
+            ],
+            heading="reCAPTCHA settings",
+        ),
         MultiFieldPanel(
             children=[
 
@@ -320,7 +351,6 @@ class CustomSetting(ClusterableModel, BaseSiteSetting):
             ],
             heading="Social Media Settings",
         ),
-        FieldPanel("owner_mail"),
         InlinePanel(
             "site_navbartrans",
             help_text="Choose one or more navbars for your site.",
