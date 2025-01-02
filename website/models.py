@@ -2,9 +2,10 @@
 Create or customize your page models here.
 """
 
-from coderedcms.blocks import NAVIGATION_STREAMBLOCKS, BaseBlock
+from coderedcms.blocks import NAVIGATION_STREAMBLOCKS
 from coderedcms.fields import CoderedStreamField
 from django import forms
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -20,7 +21,7 @@ from coderedcms.models import (
     CoderedWebPage,
 )
 from modelcluster.models import ClusterableModel
-from wagtail.admin.panels import FieldPanel, MultiFieldPanel, InlinePanel
+from wagtail.admin.panels import FieldPanel, MultiFieldPanel, InlinePanel, TabbedInterface, ObjectList
 from wagtail.contrib.settings.models import BaseSiteSetting, register_setting
 from wagtail.fields import StreamField, RichTextField
 from wagtail.images import get_image_model_string, get_image_model
@@ -317,28 +318,60 @@ class CustomSetting(ClusterableModel, BaseSiteSetting):
         verbose_name="Using whatsapp chat support",
         help_text="Show/hide whatsapp chat support"
     )
-
+    email_host = models.CharField(
+        blank=True,
+        max_length=255,
+        verbose_name="Email host",
+        help_text='Your Email Host',
+    )
+    email_port = models.PositiveIntegerField(
+        default=465,
+        verbose_name="Email port",
+        help_text='Your Email Port',
+    )
+    email_use_tls = models.BooleanField(
+        default=False,
+        verbose_name="Use TLS",
+        help_text='Use TLS',
+    )
+    email_use_ssl = models.BooleanField(
+        default=True,
+        verbose_name="Use SSL",
+        help_text='Use SSL',
+    )
+    email_host_user = models.CharField(
+        blank=True,
+        max_length=255,
+        verbose_name="Email host user",
+        help_text="Email Host User"
+    )
+    email_host_password = models.CharField(
+        blank=True,
+        max_length=255,
+        verbose_name="Email host password",
+        help_text='Email Host Password',
+    )
+    email_sender = models.CharField(
+        null=True,
+        blank=True,
+        max_length=255,
+        verbose_name="From email address",
+        help_text='The default email address this site appears to send from. For example: "sender@example.com" or "Sender Name <sender@example.com>" (without quotes)'
+    )
     custom_css = models.TextField(
         null=True,
         verbose_name="Custom CSS",
         help_text="Custom CSS"
     )
-    panels = [
-        MultiFieldPanel(
-            children=[
-                FieldPanel("captcha_site_key"),
-                FieldPanel("captcha_secret_key"),
-            ],
-            heading="reCAPTCHA settings",
-        ),
-        MultiFieldPanel(
-            children=[
 
-            FieldPanel("language_menu"),
-            FieldPanel("content_margin_top"),
-            FieldPanel("nav_bg_color"),
-            FieldPanel("footer_bg_color"),
-            FieldPanel("footer_text_color"),
+    general_panels = [
+        MultiFieldPanel(
+            children=[
+                FieldPanel("language_menu"),
+                FieldPanel("content_margin_top"),
+                FieldPanel("nav_bg_color"),
+                FieldPanel("footer_bg_color"),
+                FieldPanel("footer_text_color"),
             ],
             heading="UI Settings",
         ),
@@ -351,6 +384,7 @@ class CustomSetting(ClusterableModel, BaseSiteSetting):
             ],
             heading="Social Media Settings",
         ),
+
         InlinePanel(
             "site_navbartrans",
             help_text="Choose one or more navbars for your site.",
@@ -358,6 +392,34 @@ class CustomSetting(ClusterableModel, BaseSiteSetting):
         ),
         FieldPanel("custom_css"),
     ]
+
+    captcha_panels = [
+        FieldPanel("captcha_site_key"),
+        FieldPanel("captcha_secret_key"),
+    ]
+
+    email_panels =  [
+        FieldPanel("email_host"),
+        FieldPanel("email_port"),
+        FieldPanel("email_host_user"),
+        FieldPanel("email_host_password", widget=forms.PasswordInput(render_value=True)),
+        FieldPanel("email_sender"),
+        FieldPanel("email_use_tls"),
+        FieldPanel("email_use_ssl"),
+    ]
+
+    edit_handler = TabbedInterface([
+        ObjectList(general_panels, heading='General Settings'),
+        ObjectList(email_panels, heading='Email Settings'),
+        ObjectList(captcha_panels, heading='reCAPTCHA Settings'),
+    ])
+
+    def clean(self):
+        super().clean()
+        if self.email_use_ssl and self.email_use_tls:
+            raise ValidationError(
+                _("\"Use TLS\" and \"Use SSL\" are mutually exclusive, "
+                "so only set one of those settings to True."))
 
 
 class TransNavbarOrderable(Orderable, models.Model):
@@ -412,7 +474,7 @@ class GalleryIndexPage(CoderedWebPage):
     """
 
     class Meta:
-        verbose_name = "Gallery Page"
+        verbose_name = _("Gallery Page")
 
     template = "gallery/gallery_page.html"
 
@@ -476,8 +538,6 @@ class GalleryIndexPage(CoderedWebPage):
         context["gallery_images"] = images
         return context
 
-    class Meta:
-        verbose_name = _("Gallery Page")
 
 
 
