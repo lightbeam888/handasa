@@ -547,7 +547,7 @@ def get_gallery_images(collection, page=None):
         images = get_image_model().objects.filter(collection__name=collection)
         if page:
             if page.order_images_by == 1:
-                images = images.order_by("-title")
+                images = images.order_by("title")
             elif page.order_images_by == 2:
                 images = images.order_by("-created_at")
     except Exception as e:
