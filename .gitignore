@@ -393,8 +393,7 @@ cache/
 # File uploads from forms
 protected/
 
-/media/
-/static/
+
 
 env/
 /venv/
